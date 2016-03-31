@@ -1,0 +1,18 @@
+<html lang="en">
+<head>
+    <title>{{ title|e }}</title>
+</head>
+<body>
+<nav class="top-menu">
+    {% block topMenu %}
+        top menu
+    {% endblock %}
+</nav>
+<section class="main-section">
+    {% block mainSection %}
+        main section
+    {% endblock %}
+</section>
+<script src="/build.js"></script>
+</body>
+</html>
