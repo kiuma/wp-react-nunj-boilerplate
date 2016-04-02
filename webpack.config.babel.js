@@ -91,6 +91,7 @@ switch (TARGET) {
         break;
     case 'start':
         config = merge(commonConfig, {
+            
             entry: {
                 app: [
                     path.resolve(PATHS.dev, 'index.js'),
