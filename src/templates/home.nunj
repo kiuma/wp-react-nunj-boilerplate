@@ -1,6 +1,6 @@
 {% extends "./_base/parent.nunj" %}
 
 {% block mainSection %}
-    Hello world!
+    home sweet home!
     <div id="app"></div>
 {% endblock %}

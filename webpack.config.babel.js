@@ -1,5 +1,6 @@
 import CleanWebpackPlugin from "clean-webpack-plugin";
 import NpmInstallPlugin from "npm-install-webpack-plugin";
+import HtmlWebpackPlugin from "html-webpack-plugin";
 import webpack from "webpack";
 import path from "path";
 import merge from "webpack-merge";
@@ -8,7 +9,8 @@ const src = path.join(__dirname, 'src'),
     TARGET = process.env.npm_lifecycle_event,
     PATHS = {
         app: path.join(src, 'app'),
-        templates: path.join(src, 'app', 'templates'),
+        dev: path.join(src, 'dev'),
+        templates: path.join(src, 'templates'),
         styles: path.join(src, 'app', 'styles'),
         build: path.join(__dirname, 'build')
     };
@@ -28,11 +30,7 @@ const commonConfig = {
 
             {
                 test: /\.nunj$/,
-                loader: 'file',
-                query: {
-                    regExp: "templates\\/(.*)\\.nunj",
-                    name: '[1].html'
-                },
+                loader: 'html',
                 include: PATHS.templates
 
             },
@@ -57,7 +55,7 @@ const commonConfig = {
                 // It uses default OS directory by default. If you need something
                 // more custom, pass a path to it. I.e., babel?cacheDirectory=<path>
                 loader: 'babel?cacheDirectory',
-                include: PATHS.app
+                include: [PATHS.app, PATHS.dev]
 
             }
 
@@ -66,6 +64,18 @@ const commonConfig = {
 };
 
 let config;
+
+function getTemplates() {
+    return [
+        'index',
+        'home'
+    ].map(function (templateName) {
+        return new HtmlWebpackPlugin({
+            template: path.resolve(PATHS.templates, `${templateName}.nunj`),
+            filename: `${templateName}.html`
+        });
+    })
+}
 
 switch (TARGET) {
     case 'clean':
@@ -81,12 +91,14 @@ switch (TARGET) {
         break;
     case 'start':
         config = merge(commonConfig, {
-            resolve: {
-                extensions: ['', '.js', '.jsx']
-            },
             entry: {
-                app: PATHS.app
+                app: [
+                    path.resolve(PATHS.dev, 'index.js'),
+                    path.resolve(PATHS.app, 'index.jsx')
+                ]
+
             },
+            //devtool: 'eval-source-map',
             devServer: {
                 contentBase: PATHS.build,
 // Enable history API fallback so HTML5 History API based
@@ -113,18 +125,17 @@ switch (TARGET) {
                 new NpmInstallPlugin({
                     save: true // --save
                 })
-            ]
+            ].concat(getTemplates())
         });
         break;
     default:
-
         config = merge(commonConfig, {
-            resolve: {
-                extensions: ['', '.js', '.jsx']
-            },
             entry: {
-                app: PATHS.app
-            }
+                app: path.resolve(PATHS.app, 'index.jsx')
+            },
+            plugins: [
+
+            ].concat(getTemplates())
         });
         break;
 }
