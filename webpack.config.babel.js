@@ -4,6 +4,7 @@ import HtmlWebpackPlugin from "html-webpack-plugin";
 import webpack from "webpack";
 import path from "path";
 import merge from "webpack-merge";
+//import tplInitLoader from "./src/dev/template-init-loader";
 
 const src = path.join(__dirname, 'src'),
     TARGET = process.env.npm_lifecycle_event,
@@ -16,6 +17,38 @@ const src = path.join(__dirname, 'src'),
     };
 
 process.env.BABEL_ENV = TARGET;
+let loaders = [
+    {
+        test: /\.nunj$/,
+        loader: 'html',
+        include: PATHS.templates
+
+    },
+    {
+        test: /\.nunj$/,
+        loader: 'nunjucks-html',
+        query: {
+            searchPaths: [
+                PATHS.templates
+            ]
+        },
+        include: PATHS.templates
+    },
+    {
+        test: /\.s?css$/,
+        loaders: ['style', 'css', 'sass']
+    },
+// Set up jsx. This accepts js too thanks to RegExp
+    {
+        test: /(\.jsx?|\.nunj)$/,
+        // Enable caching for improved performance during development
+        // It uses default OS directory by default. If you need something
+        // more custom, pass a path to it. I.e., babel?cacheDirectory=<path>
+        loader: 'babel?cacheDirectory',
+        include: [PATHS.app, PATHS.dev]
+
+    }
+];
 
 const commonConfig = {
     cache: true,
@@ -25,41 +58,10 @@ const commonConfig = {
         filename: 'build.js',
         publicPath: '/'
     },
-    module: {
-        loaders: [
-
-            {
-                test: /\.nunj$/,
-                loader: 'html',
-                include: PATHS.templates
-
-            },
-            {
-                test: /\.nunj$/,
-                loader: 'nunjucks-html',
-                query: {
-                    searchPaths: [
-                        PATHS.templates
-                    ]
-                },
-                include: PATHS.templates
-            },
-            {
-                test: /\.s?css$/,
-                loaders: ['style', 'css', 'sass']
-            },
-            // Set up jsx. This accepts js too thanks to RegExp
-            {
-                test: /\.jsx?$/,
-                // Enable caching for improved performance during development
-                // It uses default OS directory by default. If you need something
-                // more custom, pass a path to it. I.e., babel?cacheDirectory=<path>
-                loader: 'babel?cacheDirectory',
-                include: [PATHS.app, PATHS.dev]
-
-            }
-
-        ]
+    resolveLoader: {
+        alias: {
+            "tpl-init-loader": path.join(__dirname, 'src', 'dev', 'template-init-loader')
+        }
     }
 };
 
@@ -90,8 +92,10 @@ switch (TARGET) {
         });
         break;
     case 'start':
+
+
         config = merge(commonConfig, {
-            
+
             entry: {
                 app: [
                     path.resolve(PATHS.dev, 'index.js'),
@@ -99,7 +103,11 @@ switch (TARGET) {
                 ]
 
             },
-            //devtool: 'eval-source-map',
+            module: {
+                loaders: loaders
+            },
+            // devtool: 'eval-source-map',
+            devtool: 'source-map',
             devServer: {
                 contentBase: PATHS.build,
 // Enable history API fallback so HTML5 History API based
@@ -130,13 +138,20 @@ switch (TARGET) {
         });
         break;
     default:
+        loaders.splice(1, 0,
+            {
+                test: /\.nunj$/,
+                loader: 'tpl-init-loader',
+                include: PATHS.templates
+            });
         config = merge(commonConfig, {
             entry: {
                 app: path.resolve(PATHS.app, 'index.jsx')
             },
-            plugins: [
-
-            ].concat(getTemplates())
+            module: {
+                loaders: loaders
+            },
+            plugins: [].concat(getTemplates())
         });
         break;
 }

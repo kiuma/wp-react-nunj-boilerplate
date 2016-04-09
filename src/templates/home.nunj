@@ -2,5 +2,5 @@
 
 {% block mainSection %}
     home sweet home!
-    <div id="app"></div>
+    <div data-rcomp="App"></div>
 {% endblock %}
